@@ -1,0 +1,26 @@
+
+variable "aws_account" {}
+variable "aws_region" {}
+variable "cert_cn" {}
+variable "cert_country" {}
+variable "cert_locality" {}
+variable "cert_organisation_name" {}
+variable "cert_organisational_unit" {}
+variable "cert_state" {}
+variable "ec2_ami_type_controller_node" {}
+variable "ec2_ami_type_etcd_node" {}
+variable "ec2_ami_type_worker_node" {}
+variable "ec2_instance_type" {}
+variable "ec2_ssh_key_name" {}
+variable "environment" {}
+variable "network_availability_zone_a" {}
+variable "network_cluster_cidr_range" {}
+variable "network_ip_controller_1" {}
+variable "network_ip_controller_2" {}
+variable "network_ip_etcd_1" {}
+variable "network_ip_etcd_2" {}
+variable "network_ip_primary_ip" {}
+variable "network_ip_worker_1" {}
+variable "network_ip_worker_2" {}
+variable "network_subnet_k8s_cidr_range" {}
+variable "network_vpc_k8s_cidr_range" {}

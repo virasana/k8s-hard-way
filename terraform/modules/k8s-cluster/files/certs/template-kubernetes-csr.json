@@ -1,0 +1,33 @@
+{
+  "CN": "kubernetes",
+  "hosts": [
+    "etcd1",
+    "etcd2",
+    "controller1",
+    "controller2",
+    "worker1",
+    "worker2",
+    "${network_ip_primary_ip}",
+    "${network_ip_etcd_1}",
+    "${network_ip_etcd_2}",
+    "${network_ip_controller_1}",
+    "${network_ip_controller_2}",
+    "${network_ip_worker_1}",
+    "${network_ip_worker_2}",
+    "${kubernetes_public_ip_address}",
+    "127.0.0.1"
+  ],
+  "key": {
+    "algo": "rsa",
+    "size": 2048
+  },
+  "names": [
+    {
+      "C": "${cert_country}",
+      "L": "${cert_locality}",
+      "O": "${cert_organisation_name}",
+      "OU": "${cert_organisational_unit}",
+      "ST": "${cert_state}"
+    }
+  ]
+}
