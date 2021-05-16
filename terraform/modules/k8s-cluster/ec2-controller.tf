@@ -49,7 +49,7 @@ resource "aws_instance" "controller2" {
 
   availability_zone = var.network_availability_zone_a
   subnet_id         = aws_subnet.public_k8s.id
-  private_ip        = "10.0.0.138"
+  private_ip        = var.network_ip_controller_2
 
   tags = merge(local.common_tags,
   {

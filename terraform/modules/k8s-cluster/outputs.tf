@@ -51,7 +51,7 @@ output "ec2_instance_worker2_public_ip" {
 }
 
 output "local-hosts-file" {
-  value = local.hosts_file
+  value = local.hosts_entries
 }
 
 output "network_elastic_ip_k8s" {

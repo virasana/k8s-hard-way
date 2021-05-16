@@ -18,7 +18,7 @@ resource "aws_instance" "worker1" {
 
   availability_zone = var.network_availability_zone_a
   subnet_id         = aws_subnet.public_k8s.id
-  private_ip        = "10.0.0.181"
+  private_ip        = var.network_ip_worker_1
 
   tags = merge(local.common_tags,
   {
@@ -48,7 +48,7 @@ resource "aws_instance" "worker2" {
 
   availability_zone = var.network_availability_zone_a
   subnet_id         = aws_subnet.public_k8s.id
-  private_ip        = "10.0.0.182"
+  private_ip        = var.network_ip_worker_2
 
   tags = merge(local.common_tags,
   {

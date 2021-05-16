@@ -6,7 +6,7 @@ locals {
     name        = "k8s-hard-way"
   }
   
-  hosts_file = <<EOT
+  hosts_entries = <<EOT
 ${aws_instance.etcd1.public_ip}             etcd1
 ${aws_instance.etcd2.public_ip}             etcd2
 ${aws_instance.worker1.public_ip}           worker1

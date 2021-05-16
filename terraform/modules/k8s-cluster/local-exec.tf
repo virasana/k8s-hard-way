@@ -5,7 +5,17 @@ resource "null_resource" "remove-remote-hosts-ssh" {
   provisioner "local-exec" {
     command = "/root/scripts/cleanup-ssh.sh"
   }
-  depends_on = [local_file.cleanup-hosts]
+  depends_on = [local_file.cleanup-ssh]
+}
+
+resource "null_resource" "setup-local-hosts" {
+  triggers = {
+    always_run = timestamp()
+  }
+  provisioner "local-exec" {
+    command = "/root/scripts/setup-local-hosts.sh"
+  }
+  depends_on = [local_file.setup-local-hosts]
 }
 
 resource "null_resource" "generate-certs" {
@@ -25,11 +35,5 @@ resource "null_resource" "deploy-k8s-client-certs" {
   provisioner "local-exec" {
     command = "${path.module}/files/certs/deploy-k8s-client-certs.sh"
   }
-  depends_on = [null_resource.generate-certs]
+  depends_on = [null_resource.setup-local-hosts, null_resource.generate-certs]
 }
-
-
-
-
-
-
