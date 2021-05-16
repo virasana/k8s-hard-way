@@ -1,0 +1,27 @@
+aws_account                   = "624368621157"
+aws_region                    = "eu-west-1"
+cert_cn                       = "Kubernetes"
+cert_country                  = "GB"
+cert_locality                 = "London"
+cert_organisation_name        = "Karunasoft"
+cert_organisational_unit      = "Kubernetes"
+cert_state                    = "Devon"
+dns_etcd_srv_name             = "etcd"
+ec2_ami_type_bastion          = "ami-0a8e758f5e873d1c1"          // Ubuntu Server 20.04 LTS (HVM), SSD Volume Type
+ec2_ami_type_controller_node  = "ami-0a8e758f5e873d1c1"          // Ubuntu Server 20.04 LTS (HVM), SSD Volume Type
+ec2_ami_type_etcd_node        = "ami-0a8e758f5e873d1c1"          // Ubuntu Server 20.04 LTS (HVM), SSD Volume Type
+ec2_ami_type_worker_node      = "ami-0a8e758f5e873d1c1"          // Ubuntu Server 20.04 LTS (HVM), SSD Volume Type
+ec2_count_controller          = 3
+ec2_count_etcd                = 3
+ec2_count_worker              = 3
+ec2_instance_type             = "t2.nano"
+ec2_ssh_key_name              = "ksone"
+environment                   = "ksone"
+network_availability_zone_a   = "eu-west-1a"
+network_cluster_cidr_range    = "10.240.0.0/24"
+network_ip_bastion            = "10.240.0.30"
+network_ip_controller         = "10.240.0.1"
+network_ip_worker             = "10.240.0.2"
+network_subnet_k8s_cidr_range = "10.240.0.0/24"
+network_vpc_k8s_cidr_range    = "10.240.0.0/16"
+

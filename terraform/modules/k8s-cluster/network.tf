@@ -1,3 +1,7 @@
+data "http" "myip" {
+  url = "http://ipv4.icanhazip.com"
+}
+
 resource "aws_vpc" "vpc_k8s" {
   cidr_block           = var.network_vpc_k8s_cidr_range
   enable_dns_hostnames = true

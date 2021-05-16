@@ -1,32 +1,310 @@
+#!/bin/bash
+set -euo pipefail
+
 echo "***** Generate Certs *****"
 echo "usage: \./generate-certs/sh <EIP Address>"
-SCRIPT_DIR=$(dirname $(readlink -f "$0"))
-CA_PEM_FILE_PATH="./ca.pem"
-KUBERNETES_PUBLIC_IP_ADDRESS=$1
 
-if [ -f "$CA_PEM_FILE_PATH" ]; then
-  echo "${CA_PEM_FILE_PATH} file already exists so skipping cert creation."
-else
-  echo "==> no .pem file found in '${CA_PEM_FILE_PATH}' so I am generating new certs"
-  echo "==> generating a new ca cert"
-  cfssl gencert -initca "/tmp/ca-csr.json" | cfssljson -bare ca
-  echo "==> here is the new ca cert:"
-  openssl x509 g-in $CA_PEM_FILE_PATH -text -noout
+KUBERNETES_PUBLIC_ADDRESS=$(aws ec2 describe-addresses | jq -r '. | select(.Addresses[].Tags[] | .Key=="name" and .Value=="k8s-hard-way").Addresses[].PublicIp')
+TMP_ROOT="/tmp/k8s-hard-way/certs"
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
-  echo "==> generating a new kubernetes tls cert"
-  (
-    set -x
-    KUBERNETES_PUBLIC_IP_ADDRESS=$1
-    cfssl gencert -ca=ca.pem \
-      -ca-key=ca-key.pem \
+function _create_ca_cert {
+  echo "*** CREATE CA CERT ***"
+  {
+    cat > ca-config.json <<EOF
+    {
+      "signing": {
+        "default": {
+          "expiry": "8760h"
+        },
+        "profiles": {
+          "kubernetes": {
+            "usages": ["signing", "key encipherment", "server auth", "client auth"],
+            "expiry": "8760h"
+          }
+        }
+      }
+    }
+EOF
+
+    cat > ca-csr.json <<EOF
+    {
+      "CN": "Kubernetes",
+      "key": {
+        "algo": "rsa",
+        "size": 2048
+      },
+      "names": [
+        {
+          "C": "GB",
+          "L": "London",
+          "O": "Kubernetes",
+          "OU": "CA",
+          "ST": "Devon"
+        }
+      ]
+    }
+EOF
+    cfssl gencert -initca ca-csr.json | cfssljson -bare ca
+  }
+}
+
+function _create_admin_cert {
+  echo "*** CREATE ADMIN CERT ***"
+  {
+    cat > admin-csr.json <<EOF
+    {
+      "CN": "admin",
+      "key": {
+        "algo": "rsa",
+        "size": 2048
+      },
+      "names": [
+        {
+          "C": "GB",
+          "L": "London",
+          "O": "system:masters",
+          "OU": "Kubernetes The Hard Way",
+          "ST": "Devon"
+        }
+      ]
+    }
+EOF
+    cfssl gencert \
+      -ca="${TMP_ROOT}/ca.pem" \
+      -ca-key="${TMP_ROOT}/ca-key.pem" \
+      -config=$SCRIPT_DIR/ca-config.json \
+      -profile=kubernetes \
+      admin-csr.json | cfssljson -bare admin
+  }
+}
+
+function _create_kubelet_certs {
+  echo "*** CREATE KUBELET CERTS ***"
+  for instance in "worker0.ksone" "worker1.ksone" "worker2.ksone"; do
+    cat > ${instance}-csr.json <<EOF
+    {
+      "CN": "system:node:${instance}",
+      "key": {
+        "algo": "rsa",
+        "size": 2048
+      },
+      "names": [
+        {
+          "C": "GB",
+          "L": "London",
+          "O": "system:nodes",
+          "OU": "Kubernetes The Hard Way",
+          "ST": "Devon"
+        }
+      ]
+    }
+EOF
+
+    external_ip=$(aws ec2 describe-instances | jq --arg instance_name $instance -r '.Reservations[].Instances[] | select(.Tags[] | select(.Key=="Description" and .Value==$instance_name)).NetworkInterfaces[].PublicIpAddress')
+    internal_ip=$(aws ec2 describe-instances | jq --arg instance_name $instance -r '.Reservations[].Instances[] | select(.Tags[] | select(.Key=="Description" and .Value==$instance_name)).NetworkInterfaces[].PrivateIpAddress')
+
+    cfssl gencert \
+      -ca="${TMP_ROOT}/ca.pem" \
+      -ca-key="${TMP_ROOT}/ca-key.pem" \
       -config="${SCRIPT_DIR}/ca-config.json" \
-      -profile=kubernetes /tmp/kubernetes-csr.json | cfssljson -bare kubernetes
-  )
-fi
+      -hostname="${instance}","${external_ip}","${internal_ip}" \
+      -profile=kubernetes \
+      ${instance}-csr.json | cfssljson -bare ${instance}
+  done
+}
 
-echo "===> displaying output of cert generation process"
-echo $PWD
-find ./ -type f \( -iname \*.pem -o -iname \*.csr \)
+function _create_controller_manager_client_cert {
+  echo "*** CREATE CONTROLLER MANAGER CLIENT CERT ***"
+  {
+    cat > kube-controller-manager-csr.json <<EOF
+    {
+      "CN": "system:kube-controller-manager",
+      "key": {
+        "algo": "rsa",
+        "size": 2048
+      },
+      "names": [
+        {
+          "C": "GB",
+          "L": "London",
+          "O": "system:kube-controller-manager",
+          "OU": "Kubernetes The Hard Way",
+          "ST": "Devon"
+        }
+      ]
+    }
+EOF
+    cfssl gencert \
+      -ca="${TMP_ROOT}/ca.pem" \
+      -ca-key="${TMP_ROOT}/ca-key.pem" \
+      -config="${SCRIPT_DIR}/ca-config.json" \
+      -profile=kubernetes \
+      kube-controller-manager-csr.json | cfssljson -bare kube-controller-manager
+    }
+}
 
-echo "<=== generate-certs.sh --> done!"
+function _create_kube_proxy_client_cert {
+    echo "*** CREATE KUBE PROXY CLIENT CERT ***"
+  {
+    cat > kube-proxy-csr.json <<EOF
+    {
+      "CN": "system:kube-proxy",
+      "key": {
+        "algo": "rsa",
+        "size": 2048
+      },
+      "names": [
+        {
+          "C": "GB",
+          "L": "London",
+          "O": "system:node-proxier",
+          "OU": "Kubernetes The Hard Way",
+          "ST": "Devon"
+        }
+      ]
+    }
+EOF
+
+    cfssl gencert \
+      -ca="${TMP_ROOT}/ca.pem" \
+      -ca-key="${TMP_ROOT}/ca-key.pem" \
+      -config="${SCRIPT_DIR}/ca-config.json" \
+      -profile=kubernetes \
+      kube-proxy-csr.json | cfssljson -bare kube-proxy
+    }
+}
+
+function _create_scheduler_client_cert {
+  echo "*** CREATE SCHEDULER CLIENT CERT ***"
+  {
+    cat > kube-scheduler-csr.json <<EOF
+    {
+      "CN": "system:kube-scheduler",
+      "key": {
+        "algo": "rsa",
+        "size": 2048
+      },
+      "names": [
+        {
+          "C": "GB",
+          "L": "London",
+          "O": "system:kube-scheduler",
+          "OU": "Kubernetes The Hard Way",
+          "ST": "Devon"
+        }
+      ]
+    }
+EOF
+
+    cfssl gencert \
+      -ca="${TMP_ROOT}/ca.pem" \
+      -ca-key="${TMP_ROOT}/ca-key.pem" \
+      -config="${SCRIPT_DIR}/ca-config.json" \
+      -profile=kubernetes \
+      kube-scheduler-csr.json | cfssljson -bare kube-scheduler
+    }
+}
+
+function _create_k8s_api_cert {
+  echo "*** CREATE K8S API CERT ***"
+  {
+    KUBERNETES_HOSTNAMES=kubernetes,kubernetes.default,kubernetes.default.svc,kubernetes.default.svc.cluster,kubernetes.svc.cluster.local
+
+    cat > kubernetes-csr.json <<EOF
+    {
+      "CN": "kubernetes",
+      "key": {
+        "algo": "rsa",
+        "size": 2048
+      },
+      "names": [
+        {
+          "C": "GB",
+          "L": "London",
+          "O": "Kubernetes",
+          "OU": "Kubernetes The Hard Way",
+          "ST": "Devon"
+        }
+      ]
+    }
+EOF
+
+    cfssl gencert \
+      -ca="${TMP_ROOT}/ca.pem" \
+      -ca-key="${TMP_ROOT}/ca-key.pem" \
+      -config="${SCRIPT_DIR}/ca-config.json" \
+      -hostname=10.32.0.1,10.240.0.10,10.240.0.11,10.240.0.12,${KUBERNETES_PUBLIC_ADDRESS},127.0.0.1,${KUBERNETES_HOSTNAMES} \
+      -profile=kubernetes \
+      kubernetes-csr.json | cfssljson -bare kubernetes
+    }
+}
+
+function _create_service_account_key_pair {
+  echo "*** CREATE SERVICE ACCOUNT KEY PAIR ***"
+  {
+    cat > service-account-csr.json <<EOF
+    {
+      "CN": "service-accounts",
+      "key": {
+        "algo": "rsa",
+        "size": 2048
+      },
+      "names": [
+        {
+          "C": "GB",
+          "L": "Londin",
+          "O": "Kubernetes",
+          "OU": "Kubernetes The Hard Way",
+          "ST": "Devon"
+        }
+      ]
+    }
+EOF
+
+    cfssl gencert \
+      -ca="${TMP_ROOT}/ca.pem" \
+      -ca-key="${TMP_ROOT}/ca-key.pem" \
+      -config="${SCRIPT_DIR}/ca-config.json" \
+      -profile=kubernetes \
+      service-account-csr.json | cfssljson -bare service-account
+    }
+}
+
+function _move_certs {
+  echo "*** MOVE CERTS ***"
+  mkdir -p "${TMP_ROOT}"
+  ls *-csr.json *.pem *.csr | xargs -I {} mv {} "${TMP_ROOT}/"
+  echo "<== done!"
+}
+
+function _distribute_certs {
+  echo "*** DISTRIBUTING CERTS TO INSTANCES ***"
+  for instance in "worker0.ksone" "worker1.ksone" "worker2.ksone"; do
+    echo "==> instance: ${instance}"
+    scp "${TMP_ROOT}/ca.pem" "${TMP_ROOT}/${instance}-key.pem" "${TMP_ROOT}/${instance}.pem" "${instance}":~/
+  done
+  echo "<== done!"
+
+  for instance in "controller0.ksone" "controller1.ksone" "controller2.ksone"; do
+    echo "==> instance: ${instance}"
+    scp "${TMP_ROOT}/ca.pem" "${TMP_ROOT}/ca-key.pem" "${TMP_ROOT}/kubernetes-key.pem" \
+      "${TMP_ROOT}/kubernetes.pem" "${TMP_ROOT}/service-account-key.pem" "${TMP_ROOT}/service-account.pem" \
+      "${instance}":~/
+  done
+  echo "<== done!"
+}
+
+[ "$(ls -A ${TMP_ROOT}/* )" ] && echo "==> [WARNING] - ${TMP_ROOT}/ is not empty - skipping certs generation.  Use rm -rf '${TMP_ROOT}' && mkdir ${TMP_ROOT} to re-create certs." && exit 0
+_create_ca_cert
+_move_certs
+_create_admin_cert
+_create_kubelet_certs
+_create_controller_manager_client_cert
+_create_kube_proxy_client_cert
+_create_scheduler_client_cert
+_create_k8s_api_cert
+_create_service_account_key_pair
+_distribute_certs
+_move_certs
 
