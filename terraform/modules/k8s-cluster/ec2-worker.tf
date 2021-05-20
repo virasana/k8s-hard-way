@@ -7,7 +7,7 @@ resource "aws_instance" "worker1" {
   vpc_security_group_ids = [
     aws_security_group.ingress-all.id]
 
-  user_data = templatefile("${path.module}/files/init.sh", {
+  user_data = templatefile("${path.module}/files/network/local-hosts.sh", {
     "network_ip_controller_1" = var.network_ip_controller_1,
     "network_ip_controller_2" = var.network_ip_controller_2,
     "network_ip_etcd_1" = var.network_ip_etcd_1,
@@ -37,7 +37,7 @@ resource "aws_instance" "worker2" {
   vpc_security_group_ids = [
     aws_security_group.ingress-all.id]
 
-  user_data = templatefile("${path.module}/files/init.sh", {
+  user_data = templatefile("${path.module}/files/network/local-hosts.sh", {
     "network_ip_controller_1" = var.network_ip_controller_1,
     "network_ip_controller_2" = var.network_ip_controller_2,
     "network_ip_etcd_1" = var.network_ip_etcd_1,

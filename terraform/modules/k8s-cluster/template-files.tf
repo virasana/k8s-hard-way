@@ -29,3 +29,11 @@ data "template_file" "ca_csr_json" {
     cert_state               = var.cert_state
   }
 }
+
+data "template_file" "etcd_service" {
+  template = file("${path.module}/files/etcd/etcd.service")
+  vars = {
+    network_ip_etcd_1 = var.network_ip_etcd_1
+    network_ip_etcd_2 = var.network_ip_etcd_2
+  }
+}

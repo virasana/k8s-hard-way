@@ -37,3 +37,19 @@ resource "null_resource" "deploy-k8s-client-certs" {
   }
   depends_on = [null_resource.setup-local-hosts, null_resource.generate-certs]
 }
+
+resource "null_resource" "setup-k8s-certs" {
+  triggers = {
+    always_run = timestamp()
+  }
+  provisioner "local-exec" {
+    command = "${path.module}/files/setup-k8s.sh"
+  }
+  depends_on = [
+    null_resource.setup-local-hosts,
+    null_resource.generate-certs,
+    null_resource.deploy-k8s-client-certs,
+    null_resource.remove-remote-hosts-ssh,
+    local_file.etcd_service
+  ]
+}

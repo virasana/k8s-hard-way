@@ -4,9 +4,6 @@ echo "install curl"
 apt-update
 apt-get install -y curl
 
-     --url 'http://example.com'\
-     --output './path/to/file'
-
 echo "===> delete previous hosts file entries"
 awk '!/etcd|worker|controller/' /etc/hosts > /tmp/hosts-tmp
 cat /tmp/hosts-tmp > /etc/hosts
