@@ -1,0 +1,12 @@
+---
+  - name: k8s-setup
+    hosts: etcd
+    become: yes
+    tasks:
+      - name: Copy each file over that matches the given pattern
+        copy:
+          src: "{{ item }}"
+          dest: "/etc/etcd/"
+          mode: 0700
+        with_fileglob:
+          - "*.pem"
