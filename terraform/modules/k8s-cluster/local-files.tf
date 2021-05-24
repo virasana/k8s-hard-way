@@ -42,6 +42,6 @@ resource "local_file" "ca_csr" {
 
 resource "local_file" "etcd_service" {
   content         = data.template_file.etcd_service.rendered
-  filename        = "/tmp/etcd.service"
+  filename        = "/tmp/ansible/etcd.service"
   file_permission = "0700"
 }

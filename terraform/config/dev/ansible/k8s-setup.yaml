@@ -3,10 +3,19 @@
     hosts: etcd
     become: yes
     tasks:
-      - name: Copy each file over that matches the given pattern
+      - name: deploy .pem files to etc/etcd
         copy:
           src: "{{ item }}"
           dest: "/etc/etcd/"
           mode: 0700
         with_fileglob:
           - "*.pem"
+      - name: deploy /tmp/ansible/etcd.service to /etc/systemd/system/
+        copy:
+          src: /tmp/etcd/etcd.service
+          dest: /etc/systemd/system
+          mode: 0700
+      - name: run install-etcd.sh
+        ansible.builtin.script:
+        args:
+          executable: '/tmp/etcd/install-etcd.sh'

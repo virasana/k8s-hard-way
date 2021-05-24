@@ -28,28 +28,11 @@ resource "null_resource" "generate-certs" {
   depends_on = [data.template_file.ca_csr_json, data.template_file.kubernetes_csr_json]
 }
 
-resource "null_resource" "deploy-k8s-client-certs" {
+resource "null_resource" "copy_etcd_to_tmp" {
   triggers = {
     always_run = timestamp()
   }
   provisioner "local-exec" {
-    command = "${path.module}/files/certs/deploy-k8s-client-certs.sh"
+    command = "cp -rf ${path.module}/files/etcd /tmp/"
   }
-  depends_on = [null_resource.setup-local-hosts, null_resource.generate-certs]
-}
-
-resource "null_resource" "setup-k8s-certs" {
-  triggers = {
-    always_run = timestamp()
-  }
-  provisioner "local-exec" {
-    command = "${path.module}/files/setup-k8s.sh"
-  }
-  depends_on = [
-    null_resource.setup-local-hosts,
-    null_resource.generate-certs,
-    null_resource.deploy-k8s-client-certs,
-    null_resource.remove-remote-hosts-ssh,
-    local_file.etcd_service
-  ]
 }
