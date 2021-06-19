@@ -15,6 +15,7 @@
           src: /tmp/etcd/etcd.service
           dest: /etc/systemd/system
           mode: 0600
+          force: yes
       - name: ensure /tmp/etcd/ exists
         become: true
         ansible.builtin.file:
