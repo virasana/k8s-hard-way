@@ -1,4 +1,3 @@
-
 variable "aws_account" {}
 variable "aws_region" {}
 variable "cert_cn" {}
@@ -13,6 +12,8 @@ variable "ec2_ami_type_worker_node" {}
 variable "ec2_instance_type" {}
 variable "ec2_ssh_key_name" {}
 variable "environment" {}
+variable "etcd_name_etcd1" {}
+variable "etcd_name_etcd2" {}
 variable "network_availability_zone_a" {}
 variable "network_cluster_cidr_range" {}
 variable "network_ip_controller_1" {}

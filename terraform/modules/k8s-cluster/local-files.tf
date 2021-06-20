@@ -2,12 +2,13 @@
 // because ssh still 'knows' about the old ip addresses
 resource "local_file" "cleanup-ssh" {
   content         = <<EOT
-    ssh-keygen -f '/root/.ssh/known_hosts' -R 'controller1'
-    ssh-keygen -f '/root/.ssh/known_hosts' -R 'controller2'
-    ssh-keygen -f '/root/.ssh/known_hosts' -R 'etcd1'
-    ssh-keygen -f '/root/.ssh/known_hosts' -R 'etcd2'
-    ssh-keygen -f '/root/.ssh/known_hosts' -R 'worker1'
-    ssh-keygen -f '/root/.ssh/known_hosts' -R 'worker2'
+    echo 'no-op'
+    #ssh-keygen -f '/root/.ssh/known_hosts' -R 'controller1'
+    #ssh-keygen -f '/root/.ssh/known_hosts' -R 'controller2'
+    #ssh-keygen -f '/root/.ssh/known_hosts' -R 'etcd1'
+    #ssh-keygen -f '/root/.ssh/known_hosts' -R 'etcd2'
+    #ssh-keygen -f '/root/.ssh/known_hosts' -R 'worker1'
+    #ssh-keygen -f '/root/.ssh/known_hosts' -R 'worker2'
 EOT
   filename        = "/root/scripts/cleanup-ssh.sh"
   file_permission = "0700"
@@ -40,8 +41,14 @@ resource "local_file" "ca_csr" {
   file_permission = "0700"
 }
 
-resource "local_file" "etcd_service" {
-  content         = data.template_file.etcd_service.rendered
-  filename        = "/tmp/ansible/etcd.service"
+resource "local_file" "etcd_service_etcd1" {
+  content         = data.template_file.etcd_service_etcd1.rendered
+  filename        = "/tmp/ansible/etcd1.service"
+  file_permission = "0700"
+}
+
+resource "local_file" "etcd_service_etcd2" {
+  content         = data.template_file.etcd_service_etcd2.rendered
+  filename        = "/tmp/ansible/etcd2.service"
   file_permission = "0700"
 }

@@ -30,9 +30,21 @@ data "template_file" "ca_csr_json" {
   }
 }
 
-data "template_file" "etcd_service" {
+data "template_file" "etcd_service_etcd1" {
   template = file("${path.module}/files/etcd/etcd.service")
   vars = {
+    etcd_name = var.etcd_name_etcd1
+    internal_ip = var.network_ip_etcd_1
+    network_ip_etcd_1 = var.network_ip_etcd_1
+    network_ip_etcd_2 = var.network_ip_etcd_2
+  }
+}
+
+data "template_file" "etcd_service_etcd2" {
+  template = file("${path.module}/files/etcd/etcd.service")
+  vars = {
+    etcd_name = var.etcd_name_etcd2
+    internal_ip = var.network_ip_etcd_2
     network_ip_etcd_1 = var.network_ip_etcd_1
     network_ip_etcd_2 = var.network_ip_etcd_2
   }

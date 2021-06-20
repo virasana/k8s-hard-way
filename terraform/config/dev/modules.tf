@@ -1,5 +1,4 @@
 module "dev-k8s-cluster" {
-  source                        = "../../modules/k8s-cluster"
   aws_account                   = "624368621157"
   aws_region                    = "eu-west-1"
   cert_cn                       = "Kubernetes"
@@ -14,6 +13,8 @@ module "dev-k8s-cluster" {
   ec2_instance_type             = "t2.nano"
   ec2_ssh_key_name              = "ksone"
   environment                   = "ksone"
+  etcd_name_etcd1               = "etcd1"
+  etcd_name_etcd2               = "etcd2"
   network_availability_zone_a   = "eu-west-1a"
   network_cluster_cidr_range    = "TODO"
   network_ip_controller_1       = var.network_ip_controller_1
@@ -25,4 +26,5 @@ module "dev-k8s-cluster" {
   network_ip_worker_2           = var.network_ip_worker_2
   network_subnet_k8s_cidr_range = "10.0.0.0/24"
   network_vpc_k8s_cidr_range    = "10.0.0.0/16"
+  source                        = "../../modules/k8s-cluster"
 }
