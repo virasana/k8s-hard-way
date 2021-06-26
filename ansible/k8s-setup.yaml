@@ -1,0 +1,81 @@
+---
+- name: etcd1
+  hosts: etcd1
+  become: yes
+  tasks:
+    - name: deploy /tmp/ansible/etcd1.service to /etc/systemd/system/etcd.service
+      copy:
+        src: /tmp/ansible/etcd1.service
+        dest: /etc/systemd/system/etcd.service
+        mode: 0600
+        force: yes
+- name: etcd2
+  hosts: etcd2
+  become: yes
+  tasks:
+    - name: deploy /tmp/ansible/etcd2.service to /etc/systemd/system/etcd.service
+      copy:
+        src: /tmp/ansible/etcd2.service
+        dest: /etc/systemd/system/etcd.service
+        mode: 0600
+        force: yes
+- name: etcd-all
+  hosts: etcd
+  become: yes
+  tasks:
+    - name: deploy .pem files to /etc/etcd
+      copy:
+        src: "{{ item }}"
+        dest: "/etc/etcd/"
+        mode: 0600
+      with_fileglob:
+        - "*.pem"
+    - name: ensure /tmp/etcd/ exists
+      become: true
+      ansible.builtin.file:
+        path: /tmp/etcd
+        state: directory
+        mode: 0700
+    - name: deploy /tmp/etcd/install-etcd.sh to /tmp/etcd/install-etcd.sh
+      become: true
+      copy:
+        src: /tmp/etcd/install-etcd.sh
+        dest: /tmp/etcd/install-etcd.sh
+        mode: 0700
+        force: yes
+    - name: execute /tmp/etcd/install-etcd.sh
+      become: true
+      script: /tmp/etcd/install-etcd.sh
+- name: controllers-all
+  hosts: controller
+  become: yes
+  tasks:
+    - name: ensure /var/lib/kubernetes exists
+      become: true
+      ansible.builtin.file:
+        path: /var/lib/kubernetes
+        state: directory
+        mode: 0700
+    - name: deploy .pem files to /var/lib/kubernetes
+      copy:
+        src: "{{ item }}"
+        dest: "/var/lib/kubernetes"
+        mode: 0600
+      with_fileglob:
+        - "*.pem"
+    - name: ensure /tmp/controller/ exists
+      become: true
+      ansible.builtin.file:
+        path: /tmp/controller
+        state: directory
+        mode: 0700
+    - name: deploy /tmp/controller/install-controller.sh to /tmp/controller/install-controller.sh
+      become: true
+      copy:
+        src: /tmp/controller/install-controller.sh
+        dest: /tmp/controller/install-controller.sh
+        mode: 0700
+        force: yes
+    - name: execute /tmp/controller/install-controller.sh
+      become: true
+      script: /tmp/controller/install-controller.sh
