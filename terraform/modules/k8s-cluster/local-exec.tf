@@ -36,3 +36,12 @@ resource "null_resource" "copy_etcd_to_tmp" {
     command = "cp -rf ${path.module}/files/etcd /tmp/"
   }
 }
+
+resource "null_resource" "copy_controller_to_tmp" {
+  triggers = {
+    always_run = timestamp()
+  }
+  provisioner "local-exec" {
+    command = "cp -rf ${path.module}/files/controller /tmp/"
+  }
+}

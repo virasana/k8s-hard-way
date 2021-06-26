@@ -2,13 +2,12 @@
 // because ssh still 'knows' about the old ip addresses
 resource "local_file" "cleanup-ssh" {
   content         = <<EOT
-    echo 'no-op'
-    #ssh-keygen -f '/root/.ssh/known_hosts' -R 'controller1'
-    #ssh-keygen -f '/root/.ssh/known_hosts' -R 'controller2'
-    #ssh-keygen -f '/root/.ssh/known_hosts' -R 'etcd1'
-    #ssh-keygen -f '/root/.ssh/known_hosts' -R 'etcd2'
-    #ssh-keygen -f '/root/.ssh/known_hosts' -R 'worker1'
-    #ssh-keygen -f '/root/.ssh/known_hosts' -R 'worker2'
+    ssh-keygen -f '/root/.ssh/known_hosts' -R 'controller1'
+    ssh-keygen -f '/root/.ssh/known_hosts' -R 'controller2'
+    ssh-keygen -f '/root/.ssh/known_hosts' -R 'etcd1'
+    ssh-keygen -f '/root/.ssh/known_hosts' -R 'etcd2'
+    ssh-keygen -f '/root/.ssh/known_hosts' -R 'worker1'
+    ssh-keygen -f '/root/.ssh/known_hosts' -R 'worker2'
 EOT
   filename        = "/root/scripts/cleanup-ssh.sh"
   file_permission = "0700"
