@@ -5,5 +5,5 @@ cat /tmp/hosts-tmp > /etc/hosts
 rm -f /tmp/hosts-tmp
 echo "<=== done!"
 echo "===> updating hosts file"
-echo '${local.hosts_entries}' >> /etc/hosts
+echo "${hosts_entries}" >> /etc/hosts
 echo "<=== done!"

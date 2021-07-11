@@ -18,6 +18,12 @@ data "template_file" "kubernetes_csr_json" {
   }
 }
 
+resource "local_file" "kubernetes_csr" {
+  content         = data.template_file.kubernetes_csr_json.rendered
+  filename        = "/tmp/k8s-hard-way/certs/kubernetes-csr.json"
+  file_permission = "0700"
+}
+
 data "template_file" "ca_csr_json" {
   template = file("${path.module}/files/certs/template-ca-csr.json")
   vars     = {
@@ -30,22 +36,18 @@ data "template_file" "ca_csr_json" {
   }
 }
 
-data "template_file" "etcd_service_etcd1" {
-  template = file("${path.module}/files/etcd/etcd.service")
-  vars = {
-    etcd_name = var.etcd_name_etcd1
-    internal_ip = var.network_ip_etcd_1
-    network_ip_etcd_1 = var.network_ip_etcd_1
-    network_ip_etcd_2 = var.network_ip_etcd_2
-  }
+resource "local_file" "ca_csr" {
+  content         = data.template_file.ca_csr_json.rendered
+  filename        = "/tmp/k8s-hard-way/certs/ca-csr.json"
+  file_permission = "0700"
 }
 
-data "template_file" "etcd_service_etcd2" {
-  template = file("${path.module}/files/etcd/etcd.service")
-  vars = {
-    etcd_name = var.etcd_name_etcd2
-    internal_ip = var.network_ip_etcd_2
-    network_ip_etcd_1 = var.network_ip_etcd_1
-    network_ip_etcd_2 = var.network_ip_etcd_2
+resource "null_resource" "generate-certs" {
+  triggers = {
+    always_run = timestamp()
   }
+  provisioner "local-exec" {
+    command = "${path.module}/files/certs/generate-certs.sh ${aws_eip.eip.public_ip}"
+  }
+  depends_on = [data.template_file.ca_csr_json, data.template_file.kubernetes_csr_json]
 }

@@ -10,10 +10,10 @@ resource "aws_instance" "etcd1" {
   user_data = templatefile("${path.module}/files/network/local-hosts.sh", {
     "network_ip_controller_1" = var.network_ip_controller_1,
     "network_ip_controller_2" = var.network_ip_controller_2,
-    "network_ip_etcd_1" = var.network_ip_etcd_1,
-    "network_ip_etcd_2" = var.network_ip_etcd_2,
-    "network_ip_worker_1" = var.network_ip_worker_1,
-    "network_ip_worker_2" = var.network_ip_worker_2
+    "network_ip_etcd_1"       = var.network_ip_etcd_1,
+    "network_ip_etcd_2"       = var.network_ip_etcd_2,
+    "network_ip_worker_1"     = var.network_ip_worker_1,
+    "network_ip_worker_2"     = var.network_ip_worker_2
   })
 
   availability_zone = var.network_availability_zone_a
@@ -24,7 +24,11 @@ resource "aws_instance" "etcd1" {
   {
     description = "etcd1"
   })
-  depends_on = [aws_security_group.ingress-all]
+
+  depends_on = [
+    aws_security_group.ingress-all,
+    null_resource.generate-certs
+  ]
 }
 
 resource "aws_instance" "etcd2" {
@@ -39,10 +43,10 @@ resource "aws_instance" "etcd2" {
   user_data = templatefile("${path.module}/files/network/local-hosts.sh", {
     "network_ip_controller_1" = var.network_ip_controller_1,
     "network_ip_controller_2" = var.network_ip_controller_2,
-    "network_ip_etcd_1" = var.network_ip_etcd_1,
-    "network_ip_etcd_2" = var.network_ip_etcd_2,
-    "network_ip_worker_1" = var.network_ip_worker_1,
-    "network_ip_worker_2" = var.network_ip_worker_2
+    "network_ip_etcd_1"       = var.network_ip_etcd_1,
+    "network_ip_etcd_2"       = var.network_ip_etcd_2,
+    "network_ip_worker_1"     = var.network_ip_worker_1,
+    "network_ip_worker_2"     = var.network_ip_worker_2
   })
 
   availability_zone = var.network_availability_zone_a
@@ -53,5 +57,9 @@ resource "aws_instance" "etcd2" {
   {
     description = "etcd2"
   })
-  depends_on = [aws_security_group.ingress-all]
+
+  depends_on = [
+    aws_security_group.ingress-all,
+    null_resource.generate-certs
+  ]
 }
