@@ -1,54 +1,107 @@
 #!/bin/bash
 set -euxo pipefail
 
-function copy_to_remote {
-  local etcd_instance=$1
-  local source_path=$2
-  local remote_dest_path=$3
+export AWS_DEFAULT_REGION='eu-west-1'
 
-  local remote_tmp_path="/home/fedora${source_path}"
-  local remote_tmp_dir="$(dirname "${remote_tmp_path}")"
+echo '*** INSTALL ETCD ***'
 
-  echo "==> copying from ${source_path} to ${etcd_instance}:${remote_dest_path}"
-
-  echo "==> etcd_instance: ${etcd_instance}"
-  echo "==> source_path: ${source_path}"
-  echo "==> dest_path: ${remote_dest_path}"
-
-  ssh "${ETCD_INSTANCE}" mkdir -p "${remote_tmp_dir}"
-  ssh "${ETCD_INSTANCE}" sudo chown fedora "${remote_tmp_dir}"
-  scp "${source_path}" "${etcd_instance}":"${remote_tmp_path}"
-  ssh "${ETCD_INSTANCE}" sudo mv "${remote_tmp_path}" "${remote_dest_path}"
-
-  echo "==> done!"
+function _download_binaries {
+  echo "*** DOWNLOAD BINARIES ***"
+  for instance in "controller0.ksone" "controller1.ksone" "controller2.ksone"
+  do
+    echo "${instance}"
+    ssh "${instance}" wget -q --https-only --timestamping \
+      "https://github.com/etcd-io/etcd/releases/download/v3.4.15/etcd-v3.4.15-linux-amd64.tar.gz"
+  done
+  echo "<== done!"
 }
 
-echo '*** install etcd'
-echo "ETCD_INSTANCE: $ETCD_INSTANCE"
-ssh "$ETCD_INSTANCE" sudo rpm -q etcd
-TMP_ROOT="/tmp/k8s-hard-way"
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+function _extract_and_install {
+  echo "*** EXTRACT AND INSTALL ETCD BINARIES ***"
+  for instance in "controller0.ksone" "controller1.ksone" "controller2.ksone"
+  do
+    echo "${instance}"
+    ssh "${instance}" tar -xf etcd-v3.4.15-linux-amd64.tar.gz
+    ssh "${instance}" sudo mv etcd-v3.4.15-linux-amd64/etcd* /usr/local/bin/
+  done
+  echo "<== done!"
+}
 
-echo "==> copy all certs to etc/etcd"
-copy_to_remote "${ETCD_INSTANCE}" "/tmp/k8s-hard-way/certs/ca.pem" "/etc/etcd/ca.pem"
-copy_to_remote "${ETCD_INSTANCE}" "/tmp/k8s-hard-way/certs/ca-key.pem" "/etc/etcd/ca-key.pem"
-copy_to_remote "${ETCD_INSTANCE}" "/tmp/k8s-hard-way/certs/kubernetes.pem" "/etc/etcd/kubernetes.pem"
-copy_to_remote "${ETCD_INSTANCE}" "/tmp/k8s-hard-way/certs/kubernetes-key.pem" "/etc/etcd/kubernetes-key.pem"
+function _configure_etcd_server {
+  echo "** CONFIGURE ETCD SERVER ***"
+  for instance in "controller0.ksone" "controller1.ksone" "controller2.ksone"
+  do
+    echo "${instance}"
+    ssh "${instance}" sudo mkdir -p /etc/etcd /var/lib/etcd
+    ssh "${instance}" sudo chmod 700 /var/lib/etcd
+    ssh "${instance}" sudo cp ca.pem kubernetes-key.pem kubernetes.pem /etc/etcd/
+    controller_name=$(echo "${instance}" | sed 's/.ksone//g')
+    internal_ip=$(aws --region=eu-west-1 ec2 describe-instances | jq --arg instance_name "${controller_name}" -r '.Reservations[].Instances[] | select(.Tags[] | select(.Key=="Description" and .Value==$instance_name)).NetworkInterfaces[].PrivateIpAddress')
+    echo "==> create the etcd.service file"
+    mkdir -p "/tmp/k8s-hard-way/etcd/"
+    cat <<EOF | tee "/tmp/k8s-hard-way/etcd/${instance}-etcd.service"
+[Unit]
+Description=etcd
+Documentation=https://github.com/coreos
 
-echo "==> copy etcd.service /etc/systemd/system/etcd.service"
-copy_to_remote "${ETCD_INSTANCE}" "${TMP_ROOT}/etcd/${ETCD_INSTANCE}/etcd.service" "/etc/systemd/system/etcd.service"
+[Service]
+Type=notify
+ExecStart=/usr/local/bin/etcd \\
+  --name ${controller_name} \\
+  --cert-file=/etc/etcd/kubernetes.pem \\
+  --key-file=/etc/etcd/kubernetes-key.pem \\
+  --peer-cert-file=/etc/etcd/kubernetes.pem \\
+  --peer-key-file=/etc/etcd/kubernetes-key.pem \\
+  --trusted-ca-file=/etc/etcd/ca.pem \\
+  --peer-trusted-ca-file=/etc/etcd/ca.pem \\
+  --peer-client-cert-auth \\
+  --client-cert-auth \\
+  --initial-advertise-peer-urls https://${internal_ip}:2380 \\
+  --listen-peer-urls https://${internal_ip}:2380 \\
+  --listen-client-urls https://${internal_ip}:2379,https://127.0.0.1:2379 \\
+  --advertise-client-urls https://${internal_ip}:2379 \\
+  --initial-cluster-token etcd-cluster-0 \\
+  --initial-cluster controller0=https://10.240.0.10:2380,controller1=https://10.240.0.11:2380,controller2=https://10.240.0.12:2380 \\
+  --initial-cluster-state new \\
+  --data-dir=/var/lib/etcd
+Restart=on-failure
+RestartSec=5
 
-echo '==> start etcd on etcd'
-ssh "$ETCD_INSTANCE" sudo systemctl daemon-reload
-ssh "$ETCD_INSTANCE" sudo systemctl daemon-reexec
+[Install]
+WantedBy=multi-user.target
+EOF
+  scp "/tmp/k8s-hard-way/etcd/${instance}-etcd.service" ${instance}:/home/ubuntu/${instance}-etcd.service
+  ssh "${instance}" sudo mv /home/ubuntu/${instance}-etcd.service /etc/systemd/system/etcd.service
+  done
+  echo "<== done!"
+}
 
-echo "==> set SELinux to permissive mode otherwise you won't be able to enable the service"
-ssh "$ETCD_INSTANCE" sudo setenforce 0
-ssh "$ETCD_INSTANCE" sudo systemctl enable etcd
-ssh "$ETCD_INSTANCE" sudo systemctl start etcd
+function _start_etcd_server {
+  echo "*** START ETCD SERVER ***"
+  for instance in "controller0.ksone" "controller1.ksone" "controller2.ksone"
+  do
+    ssh "${instance}" sudo systemctl daemon-reload
+    ssh "${instance}" sudo systemctl enable etcd
+    ssh "${instance}" sudo systemctl start etcd
+    ssh "${instance}"
+  done
+  echo "<== done!"
+}
 
-echo "==> allow etcd to settle down before we check status"
-sleep 30
-ssh "$ETCD_INSTANCE" sudo systemctl status etcd --no-pager
-echo "expected result: the above should be active without any errors"
-echo "<== done"
+function _verify_etcd_servers {
+  echo "*** VERIFY ETCD SERVERS ***"
+  for instance in "controller0.ksone" "controller1.ksone" "controller2.ksone"
+  do
+    ssh "${instance}" 'sudo ETCDCTL_API=3 etcdctl member list \
+    --endpoints=https://127.0.0.1:2379 \
+    --cacert=/etc/etcd/ca.pem \
+    --cert=/etc/etcd/kubernetes.pem \
+    --key=/etc/etcd/kubernetes-key.pem'
+  done
+}
+
+#_download_binaries
+#_extract_and_install
+_configure_etcd_server
+_start_etcd_server
+_verify_etcd_servers
