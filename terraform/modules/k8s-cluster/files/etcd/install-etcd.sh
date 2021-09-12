@@ -5,10 +5,9 @@ export AWS_DEFAULT_REGION='eu-west-1'
 
 echo '*** INSTALL ETCD ***'
 
-function _download_binaries {
+function _download_binaries() {
   echo "*** DOWNLOAD BINARIES ***"
-  for instance in "controller0.ksone" "controller1.ksone" "controller2.ksone"
-  do
+  for instance in "controller0.ksone" "controller1.ksone" "controller2.ksone"; do
     echo "${instance}"
     ssh "${instance}" wget -q --https-only --timestamping \
       "https://github.com/etcd-io/etcd/releases/download/v3.4.15/etcd-v3.4.15-linux-amd64.tar.gz"
@@ -16,10 +15,9 @@ function _download_binaries {
   echo "<== done!"
 }
 
-function _extract_and_install {
+function _extract_and_install() {
   echo "*** EXTRACT AND INSTALL ETCD BINARIES ***"
-  for instance in "controller0.ksone" "controller1.ksone" "controller2.ksone"
-  do
+  for instance in "controller0.ksone" "controller1.ksone" "controller2.ksone"; do
     echo "${instance}"
     ssh "${instance}" tar -xf etcd-v3.4.15-linux-amd64.tar.gz
     ssh "${instance}" sudo mv etcd-v3.4.15-linux-amd64/etcd* /usr/local/bin/
@@ -27,10 +25,9 @@ function _extract_and_install {
   echo "<== done!"
 }
 
-function _configure_etcd_server {
+function _configure_etcd_server() {
   echo "** CONFIGURE ETCD SERVER ***"
-  for instance in "controller0.ksone" "controller1.ksone" "controller2.ksone"
-  do
+  for instance in "controller0.ksone" "controller1.ksone" "controller2.ksone"; do
     echo "${instance}"
     ssh "${instance}" sudo mkdir -p /etc/etcd /var/lib/etcd
     ssh "${instance}" sudo chmod 700 /var/lib/etcd
@@ -70,28 +67,28 @@ RestartSec=5
 [Install]
 WantedBy=multi-user.target
 EOF
-  scp "/tmp/k8s-hard-way/etcd/${instance}-etcd.service" ${instance}:/home/ubuntu/${instance}-etcd.service
-  ssh "${instance}" sudo mv /home/ubuntu/${instance}-etcd.service /etc/systemd/system/etcd.service
+    scp "/tmp/k8s-hard-way/etcd/${instance}-etcd.service" ${instance}:/home/ubuntu/${instance}-etcd.service
+    ssh "${instance}" sudo mv /home/ubuntu/${instance}-etcd.service /etc/systemd/system/etcd.service
   done
   echo "<== done!"
 }
 
-function _start_etcd_server {
+function _start_etcd_server() {
   echo "*** START ETCD SERVER ***"
-  for instance in "controller0.ksone" "controller1.ksone" "controller2.ksone"
-  do
-    ssh "${instance}" sudo systemctl daemon-reload
-    ssh "${instance}" sudo systemctl enable etcd
-    ssh "${instance}" sudo systemctl start etcd
-    ssh "${instance}"
+  for instance in "controller0.ksone" "controller1.ksone" "controller2.ksone"; do
+    (
+      ssh "${instance}" sudo systemctl daemon-reload
+      ssh "${instance}" sudo systemctl enable etcd
+      ssh "${instance}" sudo systemctl start etcd
+      ssh "${instance}"
+    )
   done
   echo "<== done!"
 }
 
-function _verify_etcd_servers {
+function _verify_etcd_servers() {
   echo "*** VERIFY ETCD SERVERS ***"
-  for instance in "controller0.ksone" "controller1.ksone" "controller2.ksone"
-  do
+  for instance in "controller0.ksone" "controller1.ksone" "controller2.ksone"; do
     ssh "${instance}" 'sudo ETCDCTL_API=3 etcdctl member list \
     --endpoints=https://127.0.0.1:2379 \
     --cacert=/etc/etcd/ca.pem \
@@ -100,8 +97,8 @@ function _verify_etcd_servers {
   done
 }
 
-#_download_binaries
-#_extract_and_install
+_download_binaries
+_extract_and_install
 _configure_etcd_server
 _start_etcd_server
 _verify_etcd_servers
