@@ -6,12 +6,11 @@ echo "usage: \./generate-certs/sh <EIP Address>"
 
 KUBERNETES_PUBLIC_ADDRESS=$(aws ec2 describe-addresses | jq -r '. | select(.Addresses[].Tags[] | .Key=="name" and .Value=="k8s-hard-way").Addresses[].PublicIp')
 TMP_ROOT="/tmp/k8s-hard-way/certs"
-SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
 function _create_ca_cert {
   echo "*** CREATE CA CERT ***"
   {
-    cat > ca-config.json <<EOF
+    cat > "${TMP_ROOT}/ca-config.json" <<EOF
     {
       "signing": {
         "default": {
@@ -27,7 +26,7 @@ function _create_ca_cert {
     }
 EOF
 
-    cat > ca-csr.json <<EOF
+    cat > "${TMP_ROOT}/ca-csr.json" <<EOF
     {
       "CN": "Kubernetes",
       "key": {
@@ -45,7 +44,7 @@ EOF
       ]
     }
 EOF
-    cfssl gencert -initca ca-csr.json | cfssljson -bare ca
+    cfssl gencert -initca "${TMP_ROOT}/ca-csr.json" | cfssljson -bare ca
   }
 }
 
@@ -70,12 +69,16 @@ function _create_admin_cert {
       ]
     }
 EOF
-    cfssl gencert \
-      -ca="${TMP_ROOT}/ca.pem" \
-      -ca-key="${TMP_ROOT}/ca-key.pem" \
-      -config=$SCRIPT_DIR/ca-config.json \
-      -profile=kubernetes \
-      admin-csr.json | cfssljson -bare admin
+    (
+      set -x;
+      cfssl gencert \
+        -ca="${TMP_ROOT}/ca.pem" \
+        -ca-key="${TMP_ROOT}/ca-key.pem" \
+        -config="${TMP_ROOT}/ca-config.json" \
+        -profile=kubernetes \
+        admin-csr.json | cfssljson -bare admin
+      set +x;
+    )
   }
 }
 
@@ -107,7 +110,7 @@ EOF
     cfssl gencert \
       -ca="${TMP_ROOT}/ca.pem" \
       -ca-key="${TMP_ROOT}/ca-key.pem" \
-      -config="${SCRIPT_DIR}/ca-config.json" \
+      -config="${TMP_ROOT}/ca-config.json" \
       -hostname="${instance}","${external_ip}","${internal_ip}" \
       -profile=kubernetes \
       ${instance}-csr.json | cfssljson -bare ${instance}
@@ -138,7 +141,7 @@ EOF
     cfssl gencert \
       -ca="${TMP_ROOT}/ca.pem" \
       -ca-key="${TMP_ROOT}/ca-key.pem" \
-      -config="${SCRIPT_DIR}/ca-config.json" \
+      -config="${TMP_ROOT}/ca-config.json" \
       -profile=kubernetes \
       kube-controller-manager-csr.json | cfssljson -bare kube-controller-manager
     }
@@ -169,7 +172,7 @@ EOF
     cfssl gencert \
       -ca="${TMP_ROOT}/ca.pem" \
       -ca-key="${TMP_ROOT}/ca-key.pem" \
-      -config="${SCRIPT_DIR}/ca-config.json" \
+      -config="${TMP_ROOT}/ca-config.json" \
       -profile=kubernetes \
       kube-proxy-csr.json | cfssljson -bare kube-proxy
     }
@@ -200,7 +203,7 @@ EOF
     cfssl gencert \
       -ca="${TMP_ROOT}/ca.pem" \
       -ca-key="${TMP_ROOT}/ca-key.pem" \
-      -config="${SCRIPT_DIR}/ca-config.json" \
+      -config="${TMP_ROOT}/ca-config.json" \
       -profile=kubernetes \
       kube-scheduler-csr.json | cfssljson -bare kube-scheduler
     }
@@ -233,7 +236,7 @@ EOF
     cfssl gencert \
       -ca="${TMP_ROOT}/ca.pem" \
       -ca-key="${TMP_ROOT}/ca-key.pem" \
-      -config="${SCRIPT_DIR}/ca-config.json" \
+      -config="${TMP_ROOT}/ca-config.json" \
       -hostname=10.32.0.1,10.240.0.10,10.240.0.11,10.240.0.12,${KUBERNETES_PUBLIC_ADDRESS},127.0.0.1,${KUBERNETES_HOSTNAMES} \
       -profile=kubernetes \
       kubernetes-csr.json | cfssljson -bare kubernetes
@@ -265,17 +268,10 @@ EOF
     cfssl gencert \
       -ca="${TMP_ROOT}/ca.pem" \
       -ca-key="${TMP_ROOT}/ca-key.pem" \
-      -config="${SCRIPT_DIR}/ca-config.json" \
+      -config="${TMP_ROOT}/ca-config.json" \
       -profile=kubernetes \
       service-account-csr.json | cfssljson -bare service-account
     }
-}
-
-function _move_certs {
-  echo "*** MOVE CERTS ***"
-  mkdir -p "${TMP_ROOT}"
-  ls *-csr.json *.pem *.csr | xargs -I {} mv {} "${TMP_ROOT}/"
-  echo "<== done!"
 }
 
 function _distribute_certs {
@@ -296,8 +292,8 @@ function _distribute_certs {
 }
 
 [ "$(ls -A ${TMP_ROOT}/* )" ] && echo "==> [WARNING] - ${TMP_ROOT}/ is not empty - skipping certs generation.  Use rm -rf '${TMP_ROOT}' && mkdir ${TMP_ROOT} to re-create certs." && exit 0
+pushd "${TMP_ROOT}"
 _create_ca_cert
-_move_certs
 _create_admin_cert
 _create_kubelet_certs
 _create_controller_manager_client_cert
@@ -306,5 +302,4 @@ _create_scheduler_client_cert
 _create_k8s_api_cert
 _create_service_account_key_pair
 _distribute_certs
-_move_certs
-
+popd

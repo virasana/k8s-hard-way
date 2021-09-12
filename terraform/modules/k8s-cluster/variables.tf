@@ -1,11 +1,5 @@
 variable "aws_account" {}
 variable "aws_region" {}
-variable "cert_cn" {}
-variable "cert_country" {}
-variable "cert_locality" {}
-variable "cert_organisation_name" {}
-variable "cert_organisational_unit" {}
-variable "cert_state" {}
 variable "dns_etcd_srv_name" {}
 variable "ec2_ami_type_bastion" {}
 variable "ec2_ami_type_controller_node" {}

@@ -1,11 +1,5 @@
 aws_account                   = "624368621157"
 aws_region                    = "eu-west-1"
-cert_cn                       = "Kubernetes"
-cert_country                  = "GB"
-cert_locality                 = "London"
-cert_organisation_name        = "Karunasoft"
-cert_organisational_unit      = "Kubernetes"
-cert_state                    = "Devon"
 dns_etcd_srv_name             = "etcd"
 ec2_ami_type_bastion          = "ami-0a8e758f5e873d1c1"          // Ubuntu Server 20.04 LTS (HVM), SSD Volume Type
 ec2_ami_type_controller_node  = "ami-0a8e758f5e873d1c1"          // Ubuntu Server 20.04 LTS (HVM), SSD Volume Type

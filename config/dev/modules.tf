@@ -2,12 +2,6 @@ module "dev-k8s-cluster" {
   source                        = "../../terraform/modules/k8s-cluster"
   aws_account                   = "624368621157"
   aws_region                    = "eu-west-1"
-  cert_cn                       = "Kubernetes"
-  cert_country                  = var.cert_country
-  cert_locality                 = var.cert_locality
-  cert_organisation_name        = var.cert_organisation_name
-  cert_organisational_unit      = var.cert_organisational_unit
-  cert_state                    = var.cert_state
   dns_etcd_srv_name             = var.dns_etcd_srv_name
   ec2_ami_type_bastion          = var.ec2_ami_type_bastion
   ec2_ami_type_controller_node  = var.ec2_ami_type_controller_node
