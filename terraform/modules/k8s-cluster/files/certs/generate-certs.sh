@@ -292,6 +292,7 @@ function _distribute_certs {
 }
 
 [ "$(ls -A ${TMP_ROOT}/* )" ] && echo "==> [WARNING] - ${TMP_ROOT}/ is not empty - skipping certs generation.  Use rm -rf '${TMP_ROOT}' && mkdir ${TMP_ROOT} to re-create certs." && exit 0
+mkdir -p "${TMP_ROOT}"
 pushd "${TMP_ROOT}"
 _create_ca_cert
 _create_admin_cert

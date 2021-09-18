@@ -80,7 +80,6 @@ function _start_etcd_server() {
       ssh "${instance}" sudo systemctl daemon-reload
       ssh "${instance}" sudo systemctl enable etcd
       ssh "${instance}" sudo systemctl start etcd
-      ssh "${instance}"
     )
   done
   echo "<== done!"
@@ -95,6 +94,7 @@ function _verify_etcd_servers() {
     --cert=/etc/etcd/kubernetes.pem \
     --key=/etc/etcd/kubernetes-key.pem'
   done
+  echo "<== done!"
 }
 
 _download_binaries

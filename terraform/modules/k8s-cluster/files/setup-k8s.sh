@@ -36,10 +36,10 @@ function _install_etcd {
 }
 
 echo '===> setting up k8s cluster'
-_generate_certs
 _ssh_config_create
 _ssh_add_known_hosts
 _hush_logins
+_generate_certs
 _install_authentication
 _generate_encyption
 _install_etcd
