@@ -35,11 +35,16 @@ function _install_etcd {
   "${SCRIPT_DIR}/etcd/install-etcd.sh"
 }
 
+function _bootstrap_control_plane {
+  "${SCRIPT_DIR}/control-plane/bootstrap-control-plane.sh"
+}
+
 echo '===> setting up k8s cluster'
-_ssh_config_create
-_ssh_add_known_hosts
-_hush_logins
-_generate_certs
-_install_authentication
-_generate_encyption
-_install_etcd
+#_ssh_config_create
+#_ssh_add_known_hosts
+#_hush_logins
+#_generate_certs
+#_install_authentication
+#_generate_encyption
+#_install_etcd
+_bootstrap_control_plane
