@@ -79,7 +79,8 @@ function _start_etcd_server() {
     (
       ssh "${instance}" sudo systemctl daemon-reload
       ssh "${instance}" sudo systemctl enable etcd
-      ssh "${instance}" sudo systemctl start etcd
+      echo "==> start etcd on ${instance}.  Using shell background process so that we can move on"
+      ssh "${instance}" sudo systemctl start etcd &
     )
   done
   echo "<== done!"
@@ -97,8 +98,8 @@ function _verify_etcd_servers() {
   echo "<== done!"
 }
 
-_download_binaries
-_extract_and_install
-_configure_etcd_server
-_start_etcd_server
+#_download_binaries
+#_extract_and_install
+#_configure_etcd_server
+#_start_etcd_server
 _verify_etcd_servers

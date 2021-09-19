@@ -2,7 +2,7 @@
 set -euxo pipefail
 
 function _create_k8s_config_directory {
-  echo "*** create k8s config directory ***"
+  echo "*** CREATE K8S CONFIG DIRECTORY ***"
   for instance in "controller0.ksone" "controller1.ksone" "controller2.ksone"; do
     echo "${instance} ==> sudo mkdir -p /etc/kubernetes/config"
     ssh "${instance}" sudo mkdir -p /etc/kubernetes/config
@@ -11,7 +11,7 @@ function _create_k8s_config_directory {
 }
 
 function _donwload_binaries {
-  echo "*** download control plane binaries (apiserver, controller-manager, kube-scheduler, kubectl) ***"
+  echo "*** DOWNLOAD CONTROL PLANE BINARIES (APISERVER, CONTROLLER-MANAGER, KUBE-SCHEDULER, KUBECTL) ***"
   for instance in "controller0.ksone" "controller1.ksone" "controller2.ksone"; do
     echo "${instance} (in progress...)"
     ssh "${instance}" wget -q --https-only --timestamping \
@@ -23,7 +23,7 @@ function _donwload_binaries {
 }
 
 function _install_binaries {
-  echo "*** install control plane binaries (apiserver, controller-manager, kube-scheduler, kubectl) ***"
+  echo "*** INSTALL CONTROL PLANE BINARIES (APISERVER, CONTROLLER-MANAGER, KUBE-SCHEDULER, KUBECTL) ***"
   for instance in "controller0.ksone" "controller1.ksone" "controller2.ksone"; do
     echo "${instance} (in progress...)"
     ssh "${instance}" chmod +x kube-apiserver kube-controller-manager kube-scheduler kubectl
@@ -32,7 +32,7 @@ function _install_binaries {
 }
 
 function _configure_api_server {
-  echo "*** configure api server ***"
+  echo "*** CONFIGURE API SERVER ***"
   for instance in "controller0.ksone" "controller1.ksone" "controller2.ksone"; do
     echo "${instance} (in progress...)"
     echo "==> mkdir -p /var/lib/kubernetes/"
@@ -100,7 +100,7 @@ EOF
 }
 
 function _configure_k8s_controller_manager {
-  echo "*** configure the k8s controller manager ***"
+  echo "*** CONFIGURE THE K8S CONTROLLER MANAGER ***"
   for instance in "controller0.ksone" "controller1.ksone" "controller2.ksone"; do
     echo "${instance} (in progress...)"
     echo "==> move controller manager binaries to /var/lib/kubernetes/"
@@ -141,7 +141,7 @@ EOF
 }
 
 function _configure_k8s_scheduler {
-  echo "*** configure k8s scheduler ***"
+  echo "*** CONFIGURE K8S SCHEDULER ***"
   for instance in "controller0.ksone" "controller1.ksone" "controller2.ksone"; do
     echo "${instance} (in progress...)"
     ssh "${instance}" sudo cp -f kube-scheduler.kubeconfig /var/lib/kubernetes/
@@ -181,21 +181,42 @@ EOF
   echo "<== done"
 }
 
-function _start_controller_service {
-  echo "==> start the controller service"
+function _start_controller_services {
+  echo "*** START THE CONTROLLER SERVICE ***"
   for instance in "controller0.ksone" "controller1.ksone" "controller2.ksone"; do
   echo "${instance} (in progress...)"
     ssh "${instance}" sudo systemctl daemon-reload
     ssh "${instance}" sudo systemctl enable kube-apiserver kube-controller-manager kube-scheduler
-    ssh "${instance}" sudo systemctl start kube-apiserver kube-controller-manager kube-scheduler
+    ssh "${instance}" sudo systemctl start kube-apiserver kube-controller-manager kube-scheduler &
   done
   echo "<== done!"
 }
 
-#_create_k8s_config_directory
-#_donwload_binaries
-#_install_binaries
-#_configure_api_server
-#_configure_k8s_controller_manager
+function _deploy_certs {
+  echo "*** DEPLOY CERTS ***"
+  for instance in "controller0.ksone" "controller1.ksone" "controller2.ksone"; do
+    echo "${instance} (in progress...)"
+    echo "==> /var/lib/kubernetes/service-account-key.pem"
+    echo "${instance} (in progress...)"
+    echo "==> /var/lib/kubernetes/service-account.pem"
+    ssh "${instance}" sudo cp -f /home/ubuntu/service-account.pem /var/lib/kubernetes/service-account.pem
+    echo "==> /var/lib/kubernetes/kubernetes.pem"
+    ssh "${instance}" sudo cp -f /home/ubuntu/kubernetes.pem /var/lib/kubernetes/kubernetes.pem
+    echo "==> /var/lib/kubernetes/kubernetes-key.pem"
+    ssh "${instance}" sudo cp -f /home/ubuntu/kubernetes-key.pem /var/lib/kubernetes/kubernetes-key.pem
+    echo "==> var/lib/kubernetes/encryption-config.yaml"
+    ssh "${instance}" sudo cp -f /home/ubuntu/encryption-config.yaml /var/lib/kubernetes/encryption-config.yaml
+    echo "==> /var/lib/kubernetes/ca.pem"
+    ssh "${instance}" sudo cp -f /home/ubuntu/ca.pem /var/lib/kubernetes/ca.pem
+  done
+  echo "<== done!"
+}
+
+_deploy_certs
+_create_k8s_config_directory
+_donwload_binaries
+_install_binaries
+_configure_api_server
+_configure_k8s_controller_manager
 _configure_k8s_scheduler
-_start_controller_service
+_start_controller_services
