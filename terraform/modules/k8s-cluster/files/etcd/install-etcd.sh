@@ -98,8 +98,8 @@ function _verify_etcd_servers() {
   echo "<== done!"
 }
 
-#_download_binaries
-#_extract_and_install
-#_configure_etcd_server
-#_start_etcd_server
+_download_binaries
+_extract_and_install
+_configure_etcd_server
+_start_etcd_server
 _verify_etcd_servers

@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euxo pipefail
+set -euo pipefail
 
 function _create_k8s_config_directory {
   echo "*** CREATE K8S CONFIG DIRECTORY ***"
@@ -198,6 +198,8 @@ function _deploy_certs {
     echo "${instance} (in progress...)"
     echo "==> /var/lib/kubernetes/service-account-key.pem"
     echo "${instance} (in progress...)"
+    echo "==> mkdir -p /var/lib/kubernetes/q"
+    ssh "${instance}" sudo mkdir -p /var/lib/kubernetes/
     echo "==> /var/lib/kubernetes/service-account.pem"
     ssh "${instance}" sudo cp -f /home/ubuntu/service-account.pem /var/lib/kubernetes/service-account.pem
     echo "==> /var/lib/kubernetes/kubernetes.pem"
@@ -212,11 +214,32 @@ function _deploy_certs {
   echo "<== done!"
 }
 
-_deploy_certs
-_create_k8s_config_directory
-_donwload_binaries
-_install_binaries
-_configure_api_server
-_configure_k8s_controller_manager
-_configure_k8s_scheduler
-_start_controller_services
+function _welcome {
+  echo "*** DEPLOY CONTROL PLANE ***"
+}
+
+function _goodbye {
+  echo "<== done!"
+}
+
+function _verify_controller_services {
+  echo "*** VERIFY CONTROLLER SERVICES ***"
+  echo "==> get kubermetes public ip address"
+  KUBERNETES_PUBLIC_ADDRESS=$(aws ec2 describe-addresses | jq -r '. | select(.Addresses[].Tags[] | .Key=="name" and .Value=="k8s-hard-way").Addresses[].PublicIp')
+  echo "KUBERNETES_PUBLIC_ADDRESS: ${KUBERNETES_PUBLIC_ADDRESS}"
+  echo "<== done!"
+}
+
+declare -g KUBERNETES_PUBLIC_ADDRESS
+
+#_welcome
+#_deploy_certs
+#_create_k8s_config_directory
+#_donwload_binaries
+#_install_binaries
+#_configure_api_server
+#_configure_k8s_controller_manager
+#_configure_k8s_scheduler
+#_start_controller_services
+_verify_controller_services
+_goodbye
