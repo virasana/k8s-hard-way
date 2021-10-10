@@ -3,7 +3,7 @@ data "http" "myip" {
 }
 
 resource "aws_vpc" "vpc_k8s" {
-  cidr_block           = var.network_vpc_k8s_cidr_range
+  cidr_block           = var.network_vpc_cidr_range
   enable_dns_hostnames = true
   enable_dns_support   = true
   tags                 = merge(local.common_tags,
@@ -13,9 +13,9 @@ resource "aws_vpc" "vpc_k8s" {
 }
 
 resource "aws_subnet" "public_k8s" {
-  cidr_block        = var.network_subnet_k8s_cidr_range
+  cidr_block        = var.network_subnet_public_cidr_range
   vpc_id            = aws_vpc.vpc_k8s.id
-  availability_zone = var.network_availability_zone_a
+  availability_zone = var.network_availability_zones[0]
   tags              = merge(local.common_tags,
   {
     description = "public-subnet-k8s"

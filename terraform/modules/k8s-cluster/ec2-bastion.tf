@@ -7,7 +7,7 @@ resource "aws_instance" "bastion" {
   vpc_security_group_ids = [
     aws_security_group.ingress-bastion.id]
 
-  availability_zone = var.network_availability_zone_a
+  availability_zone = var.network_availability_zones[0]
   subnet_id         = aws_subnet.public_k8s.id
   private_ip        = var.network_ip_bastion
   tags              = merge(local.common_tags,

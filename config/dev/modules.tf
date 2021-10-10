@@ -13,18 +13,13 @@ module "dev-k8s-cluster" {
   ec2_instance_type                = "t2.nano"
   ec2_ssh_key_name                 = "ksone"
   environment                      = "ksone"
-  network_availability_zone_a      = var.network_availability_zone_a
-  network_availability_zone_b      = var.network_availability_zone_b
-  network_availability_zone_c      = var.network_availability_zone_c
+  network_availability_zones       = var.network_availability_zones
+  network_ip_alb                   = var.network_ip_alb
   network_ip_bastion               = var.network_ip_bastion
-  network_ip_controller0           = var.network_ip_controller0
-  network_ip_controller1           = var.network_ip_controller1
-  network_ip_controller2           = var.network_ip_controller2
-  network_ip_worker0               = var.network_ip_worker0
-  network_ip_worker1               = var.network_ip_worker1
-  network_ip_worker2               = var.network_ip_worker2
-  network_subnet_                  = var.network_subnet_count_private
-  TODO: Subnets etc
+  network_ip_controller_mask       = var.network_ip_controller_mask
+  network_ip_worker_mask           = var.network_ip_worker_mask
+  network_subnet_count_private     = var.network_subnet_count_private
+  network_subnet_private_cidr_mask = var.network_subnet_private_cidr_mask
   network_subnet_public_cidr_range = var.network_subnet_public_cidr_range
   network_vpc_cidr_range           = var.network_vpc_cidr_range
 }

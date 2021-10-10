@@ -12,11 +12,11 @@ variable "ec2_instance_type" {}
 variable "ec2_ssh_key_name" {}
 variable "environment" {}
 variable "network_availability_zones" {}
-variable "network_subnet_count_private" {}
 variable "network_ip_alb" {}
 variable "network_ip_bastion" {}
 variable "network_ip_controller_mask" {}
 variable "network_ip_worker_mask" {}
+variable "network_subnet_count_private" {}
 variable "network_subnet_private_cidr_mask" {}
 variable "network_subnet_public_cidr_range" {}
 variable "network_vpc_cidr_range" {}

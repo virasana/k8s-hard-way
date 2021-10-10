@@ -19,4 +19,4 @@ network_ip_worker_mask           = "10.240.x.1x"
 network_subnet_count_private     =  3
 network_subnet_private_cidr_mask = "10.240.x.0/24"
 network_subnet_public_cidr_range = "10.240.254.0/24"
-network_vpc_cidr_range           = "10.240.254.0/16"
+network_vpc_cidr_range           = "10.240.0.0/16"
