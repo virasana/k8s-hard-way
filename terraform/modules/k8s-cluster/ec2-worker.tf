@@ -8,8 +8,8 @@ resource "aws_instance" "worker" {
   vpc_security_group_ids = [
     aws_security_group.ingress-all.id]
 
-  availability_zone = var.network_availability_zones[0]
-  subnet_id         = aws_subnet.public_k8s.id
+  availability_zone = var.network_availability_zones[count.index]
+  subnet_id         = aws_subnet.private_k8s[count.index].id
   private_ip        = replace(var.network_ip_worker_mask, "x", count.index)
   tags              = merge(local.common_tags,
   {
