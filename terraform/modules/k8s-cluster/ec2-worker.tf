@@ -6,7 +6,8 @@ resource "aws_instance" "worker" {
   key_name                    = var.ec2_ssh_key_name
 
   vpc_security_group_ids = [
-    aws_security_group.ingress-all.id]
+    aws_security_group.subnet_private.id
+  ]
 
   availability_zone = var.network_availability_zones[count.index]
   subnet_id         = aws_subnet.private_k8s[count.index].id
@@ -18,5 +19,6 @@ resource "aws_instance" "worker" {
     Pod-CIDR    = "10.200.${count.index}.0/24"
   })
   depends_on        = [
-    aws_security_group.ingress-all]
+    aws_security_group.subnet_private
+  ]
 }
