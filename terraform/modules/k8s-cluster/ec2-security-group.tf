@@ -106,6 +106,17 @@ resource aws_security_group_rule "egress_subnet_private_local" {
   security_group_id = aws_security_group.subnet_private.id
 }
 
+resource aws_security_group_rule "ingress_subnet_private_bastion_ssh" {
+  type              = "ingress"
+  cidr_blocks       = [
+    "${var.network_ip_bastion}/32",  "${chomp(data.http.myip.body)}/32"
+  ]
+  from_port         = 0
+  to_port           = 22
+  protocol          = "tcp"
+  security_group_id = aws_security_group.subnet_private.id
+}
+
 resource "aws_security_group" "ingress-bastion" {
   name   = "bastion-sg"
   vpc_id = aws_vpc.vpc_k8s.id
