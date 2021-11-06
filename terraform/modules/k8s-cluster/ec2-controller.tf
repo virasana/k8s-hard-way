@@ -16,7 +16,7 @@ resource "aws_instance" "controller" {
   tags = merge(local.common_tags,
   {
     Name        = "controller${count.index}"
-    Description = "controller${count.index}"
+    Name = "controller${count.index}"
   })
 
   depends_on = [

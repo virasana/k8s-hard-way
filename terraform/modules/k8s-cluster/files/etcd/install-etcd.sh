@@ -33,7 +33,7 @@ function _configure_etcd_server() {
     ssh "${instance}" sudo chmod 700 /var/lib/etcd
     ssh "${instance}" sudo cp ca.pem kubernetes-key.pem kubernetes.pem /etc/etcd/
     controller_name=$(echo "${instance}" | sed 's/.ksone//g')
-    internal_ip=$(aws --region=eu-west-1 ec2 describe-instances | jq --arg instance_name "${controller_name}" -r '.Reservations[].Instances[] | select(.Tags[] | select(.Key=="Description" and .Value==$instance_name)).NetworkInterfaces[].PrivateIpAddress')
+    internal_ip=$(aws --region=eu-west-1 ec2 describe-instances | jq --arg instance_name "${controller_name}" -r '.Reservations[].Instances[] | select(.Tags[] | select(.Key=="Name" and .Value==$instance_name)).NetworkInterfaces[].PrivateIpAddress')
     echo "==> create the etcd.service file"
     mkdir -p "/tmp/k8s-hard-way/etcd/"
     cat <<EOF | tee "/tmp/k8s-hard-way/etcd/${instance}-etcd.service"
@@ -58,7 +58,7 @@ ExecStart=/usr/local/bin/etcd \\
   --listen-client-urls https://${internal_ip}:2379,https://127.0.0.1:2379 \\
   --advertise-client-urls https://${internal_ip}:2379 \\
   --initial-cluster-token etcd-cluster-0 \\
-  --initial-cluster controller0=https://10.240.0.10:2380,controller1=https://10.240.0.11:2380,controller2=https://10.240.0.12:2380 \\
+  --initial-cluster controller0=https://10.240.0.110:2380,controller1=https://10.240.1.111:2380,controller2=https://10.240.2.112:2380 \\
   --initial-cluster-state new \\
   --data-dir=/var/lib/etcd
 Restart=on-failure

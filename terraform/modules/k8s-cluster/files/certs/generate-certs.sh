@@ -104,8 +104,8 @@ function _create_kubelet_certs {
     }
 EOF
 
-    external_ip=$(aws ec2 describe-instances | jq --arg instance_name $instance -r '.Reservations[].Instances[] | select(.Tags[] | select(.Key=="Description" and .Value==$instance_name)).NetworkInterfaces[].PublicIpAddress')
-    internal_ip=$(aws ec2 describe-instances | jq --arg instance_name $instance -r '.Reservations[].Instances[] | select(.Tags[] | select(.Key=="Description" and .Value==$instance_name)).NetworkInterfaces[].PrivateIpAddress')
+    external_ip=$(aws ec2 describe-instances | jq --arg instance_name $instance -r '.Reservations[].Instances[] | select(.Tags[] | select(.Key=="Name" and .Value==$instance_name)).NetworkInterfaces[].PublicIpAddress')
+    internal_ip=$(aws ec2 describe-instances | jq --arg instance_name $instance -r '.Reservations[].Instances[] | select(.Tags[] | select(.Key=="Name" and .Value==$instance_name)).NetworkInterfaces[].PrivateIpAddress')
 
     cfssl gencert \
       -ca="${TMP_ROOT}/ca.pem" \
@@ -237,7 +237,7 @@ EOF
       -ca="${TMP_ROOT}/ca.pem" \
       -ca-key="${TMP_ROOT}/ca-key.pem" \
       -config="${TMP_ROOT}/ca-config.json" \
-      -hostname=10.32.0.1,10.240.0.10,10.240.0.11,10.240.0.12,${KUBERNETES_PUBLIC_ADDRESS},127.0.0.1,${KUBERNETES_HOSTNAMES} \
+      -hostname=10.32.0.1,10.240.0.110,10.240.1.111,10.240.2.112,controller0.ksone,controller1.ksone,controller2.ksone,${KUBERNETES_PUBLIC_ADDRESS},127.0.0.1,${KUBERNETES_HOSTNAMES} \
       -profile=kubernetes \
       kubernetes-csr.json | cfssljson -bare kubernetes
     }

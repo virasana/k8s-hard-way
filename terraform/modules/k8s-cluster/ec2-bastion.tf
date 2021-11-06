@@ -5,7 +5,7 @@ resource "aws_instance" "bastion" {
   key_name                    = var.ec2_ssh_key_name
 
   vpc_security_group_ids = [
-    aws_security_group.ingress-bastion.id
+    aws_security_group.bastion.id
   ]
 
   availability_zone = var.network_availability_zones[0]
@@ -14,8 +14,8 @@ resource "aws_instance" "bastion" {
   tags              = merge(local.common_tags,
   {
     Name        = "bastion-${var.environment}"
-    Description = "bastion-${var.environment}"
+    Name = "bastion-${var.environment}"
   })
   depends_on        = [
-    aws_security_group.ingress-bastion]
+    aws_security_group.bastion]
 }

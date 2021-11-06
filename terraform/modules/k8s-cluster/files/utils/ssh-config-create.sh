@@ -2,7 +2,7 @@
 echo "*** CREATE SSH CONFIG FILE ***"
 
 export AWS_DEFAULT_REGION="eu-west-1"
-BASTION_IP=$(echo "$(aws ec2 describe-instances | jq -r '.Reservations[].Instances[] | select(.Tags[] | select(.Key=="Description" and .Value=="bastion-ksone")).NetworkInterfaces[].Association.PublicIp')")
+BASTION_IP=$(echo "$(aws ec2 describe-instances | jq -r '.Reservations[].Instances[] | select(.Tags[] | select(.Key=="Name" and .Value=="bastion-ksone")).NetworkInterfaces[].Association.PublicIp')")
 
 echo "AWS_DEFAULT_REGION: ${AWS_DEFAULT_REGION}"
 echo "BASTION_IP: ${BASTION_IP}"

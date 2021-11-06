@@ -3,7 +3,7 @@ resource "aws_security_group" "subnet_public" {
   vpc_id = aws_vpc.vpc_k8s.id
   tags   = merge(local.common_tags,
   {
-    description = "subnet-public-security-group"
+    Name = "subnet-public-security-group"
   })
 }
 
@@ -45,14 +45,14 @@ resource "aws_security_group" "subnet_private" {
   vpc_id = aws_vpc.vpc_k8s.id
   tags   = merge(local.common_tags,
   {
-    description = "subnet-private-security-group"
+    Name = "subnet-private-security-group"
   })
 }
 
-resource aws_security_group_rule "egress_subnet_private_vpc_all" {
+resource aws_security_group_rule "egress_subnet_private_all" {
   type              = "egress"
   cidr_blocks       = [
-    "10.200.0.0/16"
+    "0.0.0.0/0"
   ]
   from_port         = 0
   to_port           = 0
@@ -94,18 +94,6 @@ resource aws_security_group_rule "ingress_subnet_private_local" {
   security_group_id = aws_security_group.subnet_private.id
 }
 
-resource aws_security_group_rule "egress_subnet_private_local" {
-  count             = length(var.network_availability_zones)
-  type              = "egress"
-  cidr_blocks       = [
-    replace(var.network_subnet_private_cidr_mask, "x", count.index)
-  ]
-  from_port         = 0
-  to_port           = 0
-  protocol          = "all"
-  security_group_id = aws_security_group.subnet_private.id
-}
-
 resource aws_security_group_rule "ingress_subnet_private_bastion_ssh" {
   type              = "ingress"
   cidr_blocks       = [
@@ -117,7 +105,7 @@ resource aws_security_group_rule "ingress_subnet_private_bastion_ssh" {
   security_group_id = aws_security_group.subnet_private.id
 }
 
-resource "aws_security_group" "ingress-bastion" {
+resource "aws_security_group" "bastion" {
   name   = "bastion-sg"
   vpc_id = aws_vpc.vpc_k8s.id
 
@@ -141,6 +129,6 @@ resource "aws_security_group" "ingress-bastion" {
 
   tags = merge(local.common_tags,
   {
-    description = "access-ssh"
+    Name = "access-ssh"
   })
 }

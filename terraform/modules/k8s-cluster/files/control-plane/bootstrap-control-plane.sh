@@ -40,7 +40,7 @@ function _configure_api_server {
 
      echo "==> determining internal ip address for ${instance}"
      controller_name=$(echo "${instance}" | sed 's/.ksone//g')
-     INTERNAL_IP=$(aws --region=eu-west-1 ec2 describe-instances | jq --arg instance_name "${controller_name}" -r '.Reservations[].Instances[] | select(.Tags[] | select(.Key=="Description" and .Value==$instance_name)).NetworkInterfaces[].PrivateIpAddress')
+     INTERNAL_IP=$(aws --region=eu-west-1 ec2 describe-instances | jq --arg instance_name "${controller_name}" -r '.Reservations[].Instances[] | select(.Tags[] | select(.Key=="Name" and .Value==$instance_name)).NetworkInterfaces[].PrivateIpAddress')
      echo "INTERNAL_IP: ${INTERNAL_IP}"
 
      echo "==> determine k8s public ip address"
@@ -225,7 +225,7 @@ function _goodbye {
 function _verify_controller_services {
   echo "*** VERIFY CONTROLLER SERVICES ***"
   echo "==> get kubermetes public ip address"
-  KUBERNETES_PUBLIC_ADDRESS=$(aws ec2 describe-addresses | jq -r '. | select(.Addresses[].Tags[] | .Key=="name" and .Value=="k8s-hard-way").Addresses[].PublicIp')
+  KUBERNETES_PUBLIC_ADDRESS=$(aws --region=eu-west-1 ec2 describe-addresses | jq -r '. | select(.Addresses[].Tags[] | .Key=="Name" and .Value=="k8s-eip").Addresses[].PublicIp')
   echo "KUBERNETES_PUBLIC_ADDRESS: ${KUBERNETES_PUBLIC_ADDRESS}"
   echo "<== done!"
 }

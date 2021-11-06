@@ -42,11 +42,11 @@ function _bootstrap_control_plane {
 }
 
 echo '===> setting up k8s cluster'
-_ssh_config_create
-_ssh_add_known_hosts
-_hush_logins
-_generate_certs
-_install_authentication
-_generate_encyption
-_install_etcd
+#_ssh_config_create
+#_ssh_add_known_hosts
+#_hush_logins
+#_generate_certs
+#_install_authentication
+#_generate_encyption
+#_install_etcd
 _bootstrap_control_plane

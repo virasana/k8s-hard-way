@@ -4,7 +4,7 @@ resource "aws_key_pair" "ec2" {
   key_name = "ksone"
   tags     = merge(local.common_tags,
   {
-    description = "key-pair-ec2"
+    Name = "key-pair-ec2"
   })
 
 }

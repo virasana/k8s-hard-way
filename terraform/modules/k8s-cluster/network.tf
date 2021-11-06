@@ -8,7 +8,7 @@ resource "aws_vpc" "vpc_k8s" {
   enable_dns_support   = true
   tags                 = merge(local.common_tags,
   {
-    description = "vpc-k8s"
+    Name = "vpc-k8s"
   })
 }
 
@@ -18,7 +18,7 @@ resource "aws_subnet" "public_k8s" {
   availability_zone = var.network_availability_zones[0]
   tags              = merge(local.common_tags,
   {
-    description = "public-subnet-k8s"
+    Name = "public-subnet-k8s"
   })
 }
 
@@ -29,7 +29,7 @@ resource "aws_subnet" "private_k8s" {
   availability_zone = var.network_availability_zones[count.index]
   tags              = merge(local.common_tags,
   {
-    description       = "private-subnet-k8s"
+    Name              = "private-subnet-k8s"
     availability_zone = var.network_availability_zones[count.index]
   })
 }
@@ -38,7 +38,7 @@ resource "aws_internet_gateway" "igw" {
   vpc_id = aws_vpc.vpc_k8s.id
   tags   = merge(local.common_tags,
   {
-    description = "k8s-internet-gateway"
+    Name = "k8s-internet-gateway"
   })
 }
 
@@ -50,7 +50,7 @@ resource "aws_route_table" "rt_public_k8s" {
   }
   tags   = merge(local.common_tags,
   {
-    description = "k8s-route-table"
+    Name = "k8s-route-table"
   })
 }
 
@@ -59,7 +59,7 @@ resource "aws_nat_gateway" "nat_k8s" {
   allocation_id = aws_eip.eip_k8s.id
   tags          = merge(local.common_tags,
   {
-    description = "k8s-route-table"
+    Name = "k8s-route-table"
   })
   depends_on    = [
     aws_eip.eip_k8s]
@@ -72,9 +72,9 @@ resource "aws_route_table" "rt_private_k8s" {
     cidr_block     = "0.0.0.0/0"
     nat_gateway_id = aws_nat_gateway.nat_k8s.id
   }
-  tags = merge(local.common_tags,
+  tags   = merge(local.common_tags,
   {
-    description = "k8s-route-table"
+    Name = "k8s-route-table"
   })
 }
 
@@ -93,6 +93,6 @@ resource "aws_eip" "eip_k8s" {
   vpc  = true
   tags = merge(local.common_tags,
   {
-    description = "k8s-eip"
+    Name = "k8s-eip"
   })
 }

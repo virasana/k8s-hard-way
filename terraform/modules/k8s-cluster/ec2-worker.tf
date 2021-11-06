@@ -15,7 +15,7 @@ resource "aws_instance" "worker" {
   tags              = merge(local.common_tags,
   {
     Name        = "worker${count.index}"
-    Description = "worker${count.index}"
+    Name = "worker${count.index}"
     Pod-CIDR    = "10.200.${count.index}.0/24"
   })
   depends_on        = [
